@@ -2,6 +2,7 @@ import { classifyClikWorksFit, type FitEvidence } from "@/lib/fit-classifier";
 import type { AccountBrief } from "@/lib/account-brief-data";
 import {
   cleanHttpsUrl,
+  cleanLinkedInProfileUrl,
   cleanResearchText,
   deriveCompanySegment,
   ResearchContractError,
@@ -109,6 +110,29 @@ const peopleSchema = {
   required: ["people"],
 };
 
+const linkedinProfileSchema = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    profiles: {
+      type: "array",
+      maxItems: 3,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          name: { type: "string", maxLength: 70 },
+          linkedin_url: { type: ["string", "null"], maxLength: 2048 },
+          match_state: { type: "string", enum: ["confirmed", "not_found"] },
+          match_reason: { type: "string", maxLength: 140 },
+        },
+        required: ["name", "linkedin_url", "match_state", "match_reason"],
+      },
+    },
+  },
+  required: ["profiles"],
+};
+
 const synthesisSchema = {
   type: "object",
   additionalProperties: false,
@@ -130,7 +154,12 @@ function outputText(response: Record<string, unknown>) {
   }).join("");
 }
 
-async function structuredCall<T>(name: string, instructions: string, input: string, schema: object, webSearch: boolean): Promise<T> {
+type WebSearchOptions = boolean | {
+  allowedDomains?: string[];
+  searchContextSize?: "low" | "medium" | "high";
+};
+
+async function structuredCall<T>(name: string, instructions: string, input: string, schema: object, webSearch: WebSearchOptions): Promise<T> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error("OPENAI_API_KEY is not configured.");
   const body: Record<string, unknown> = {
@@ -143,7 +172,12 @@ async function structuredCall<T>(name: string, instructions: string, input: stri
     store: false,
   };
   if (webSearch) {
-    body.tools = [{ type: "web_search" }];
+    const options = typeof webSearch === "object" ? webSearch : {};
+    body.tools = [{
+      type: "web_search",
+      ...(options.allowedDomains?.length ? { filters: { allowed_domains: options.allowedDomains } } : {}),
+      ...(options.searchContextSize ? { search_context_size: options.searchContextSize } : {}),
+    }];
     body.tool_choice = "required";
     body.include = ["web_search_call.action.sources"];
   }
@@ -175,7 +209,7 @@ async function guardedCall<T>(
   instructions: string,
   input: string,
   schema: object,
-  webSearch: boolean,
+  webSearch: WebSearchOptions,
   validate: (value: T) => T,
 ) {
   const draft = cleanStringsDeep(await structuredCall<T>(name, instructions, input, schema, webSearch));
@@ -210,6 +244,7 @@ export type CompanyResearch = {
 };
 export type CustomerResearch = { customers: AccountBrief["customerEvidence"] };
 export type PeopleResearch = { people: Array<{ name: string; title: string; relevance: string; linkedin_url: string | null; match_state: "confirmed" | "probable"; evidence: string }> };
+type LinkedInProfileResearch = { profiles: Array<{ name: string; linkedin_url: string | null; match_state: "confirmed" | "not_found"; match_reason: string }> };
 export type Synthesis = { recommendation: string; lead_with: string; ask: string; do_not_assume: string };
 
 export function researchCompany(url: string) {
@@ -253,8 +288,52 @@ export function researchCustomers(company: CompanyResearch) {
   );
 }
 
-export function researchPeople(company: CompanyResearch) {
-  return guardedCall<PeopleResearch>(
+function normalizedPersonName(value: string) {
+  return value.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]/g, "");
+}
+
+export function mergeLinkedInProfiles(people: PeopleResearch, lookup: LinkedInProfileResearch): PeopleResearch {
+  const exactProfiles = new Map(
+    lookup.profiles
+      .filter((profile) => profile.match_state === "confirmed")
+      .map((profile) => [normalizedPersonName(profile.name), cleanLinkedInProfileUrl(profile.linkedin_url)] as const)
+      .filter((entry): entry is readonly [string, string] => Boolean(entry[1])),
+  );
+  return {
+    people: people.people.map((person) => ({
+      ...person,
+      linkedin_url: cleanLinkedInProfileUrl(person.linkedin_url)
+        || exactProfiles.get(normalizedPersonName(person.name))
+        || null,
+    })),
+  };
+}
+
+async function resolveLinkedInProfiles(company: CompanyResearch, people: PeopleResearch) {
+  const missing = people.people.filter((person) => !cleanLinkedInProfileUrl(person.linkedin_url));
+  if (!missing.length) return people;
+  const lookup = await structuredCall<LinkedInProfileResearch>(
+    "account_linkedin_profile_research",
+    [
+      "Resolve canonical LinkedIn profile URLs for the supplied, already-corroborated people.",
+      "Search for every person separately using exact full name, current company, and current title. Do not stop after finding company posts or leadership pages.",
+      "Return confirmed only when the result is the exact person and current-company match. Otherwise return not_found with linkedin_url null.",
+      "Accept only public HTTPS linkedin.com/in/ profile URLs. Reject company pages, posts, search pages, directories, guessed slugs, former employees, and same-name people at other companies.",
+      "Return one result for every supplied person, preserving each supplied name exactly. No markdown or commentary.",
+    ].join(" "),
+    JSON.stringify({
+      company: company.company_name,
+      website: company.canonical_url,
+      people: missing.map(({ name, title, evidence }) => ({ name, title, evidence })),
+    }),
+    linkedinProfileSchema,
+    { allowedDomains: ["linkedin.com"], searchContextSize: "high" },
+  );
+  return validatePeopleDisplay(mergeLinkedInProfiles(people, cleanStringsDeep(lookup)));
+}
+
+export async function researchPeople(company: CompanyResearch) {
+  const people = await guardedCall<PeopleResearch>(
     "account_people_research",
     [
       "Identify no more than three current people relevant to a sales conversation: growth owner, sales or business-development leader, and operations or reply owner.",
@@ -268,6 +347,7 @@ export function researchPeople(company: CompanyResearch) {
     true,
     validatePeopleDisplay,
   );
+  return resolveLinkedInProfiles(company, people);
 }
 
 export function synthesizeHandoff(company: CompanyResearch, customers: CustomerResearch, people: PeopleResearch) {
@@ -324,8 +404,8 @@ export function buildAccountBrief(company: CompanyResearch, customers: CustomerR
     customerEvidence: customers.customers.filter((item) => safeHttps(item.url)).map((item) => ({ ...item, url: safeHttps(item.url) })),
     decisionMakers: people.people.map((person) => ({
       name: person.name, title: person.title, relevance: person.relevance,
-      linkedin: safeHttps(person.linkedin_url).replace(/^https?:\/\//, "").replace(/\/$/, "") || "No verified profile",
-      profileUrl: safeHttps(person.linkedin_url),
+      linkedin: cleanLinkedInProfileUrl(person.linkedin_url).replace(/^https?:\/\//, "") || "No verified profile",
+      profileUrl: cleanLinkedInProfileUrl(person.linkedin_url),
       confidence: person.match_state === "confirmed" ? "Confirmed" : "Probable match",
       confidenceTone: person.match_state,
       initials: initials(person.name), evidence: person.evidence,

@@ -34,6 +34,22 @@ export function cleanHttpsUrl(value: string) {
   }
 }
 
+export function cleanLinkedInProfileUrl(value: string | null | undefined) {
+  if (!value) return "";
+  const cleaned = cleanHttpsUrl(value);
+  if (!cleaned) return "";
+  try {
+    const url = new URL(cleaned);
+    const hostname = url.hostname.toLowerCase();
+    if (hostname !== "linkedin.com" && !hostname.endsWith(".linkedin.com")) return "";
+    const match = url.pathname.match(/^\/in\/([^/]+)\/?$/i);
+    if (!match?.[1]) return "";
+    return `https://www.linkedin.com/in/${match[1]}`;
+  } catch {
+    return "";
+  }
+}
+
 export function deriveCompanySegment(minimum: number | null, maximum: number | null) {
   if (minimum === null || maximum === null) return "Unresolved";
   if (maximum <= 10) return "Micro";
@@ -151,8 +167,8 @@ export function validatePeopleDisplay<T extends PeopleDisplayContract>(research:
     requireWords(violations, `people[${index}].evidence`, person.evidence, 18);
     rejectInlineLinks(violations, `people[${index}].relevance`, person.relevance);
     rejectInlineLinks(violations, `people[${index}].evidence`, person.evidence);
-    if (person.linkedin_url && !cleanHttpsUrl(person.linkedin_url)) {
-      violations.push(`people[${index}].linkedin_url is not a valid HTTPS URL`);
+    if (person.linkedin_url && !cleanLinkedInProfileUrl(person.linkedin_url)) {
+      violations.push(`people[${index}].linkedin_url is not a canonical LinkedIn profile URL`);
     }
   });
   if (violations.length) throw new ResearchContractError(violations);
