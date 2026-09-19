@@ -6,12 +6,12 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, RefreshCw, Search, X } from "lucide-react";
 import { ESTIMATED_API_COST_RANGE, filterJobsByQuery, PROGRESS_STAGES, SEEDED_REPORTS, type DashboardMetrics, type JobSummary } from "@/lib/research-workflow";
 
-function statusStyle(status: string) {
+function statusPresentation(status: string) {
   const normalized = status.toLowerCase();
-  if (normalized === "published") return "border-emerald-200 bg-emerald-50 text-emerald-800";
-  if (normalized === "stopped safely") return "border-amber-200 bg-amber-50 text-amber-800";
-  if (normalized === "failed" || normalized === "cancelled") return "border-red-200 bg-red-50 text-red-800";
-  return "border-violet-200 bg-violet-50 text-violet-800";
+  if (normalized === "published") return { dot: "bg-emerald-600", text: "text-emerald-800" };
+  if (normalized === "stopped safely") return { dot: "bg-amber-500", text: "text-amber-800" };
+  if (normalized === "failed" || normalized === "cancelled") return { dot: "bg-red-600", text: "text-red-800" };
+  return { dot: "bg-violet-600", text: "text-violet-800" };
 }
 
 function costForStatus(status: string) {
@@ -28,7 +28,7 @@ export function ResearchDashboard() {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const filteredJobs = useMemo(() => filterJobsByQuery(jobs, query), [jobs, query]);
-  const publishRateTone = !metrics?.publishRate ? "border-slate-200 bg-slate-50" : metrics.publishRate >= 80 ? "border-emerald-200 bg-emerald-50/70" : metrics.publishRate >= 60 ? "border-amber-200 bg-amber-50/70" : "border-red-200 bg-red-50/70";
+  const publishRateRule = !metrics?.publishRate ? "bg-slate-400" : metrics.publishRate >= 80 ? "bg-emerald-600" : metrics.publishRate >= 60 ? "bg-amber-500" : "bg-red-600";
 
   async function loadJobs() {
     try {
@@ -69,10 +69,10 @@ export function ResearchDashboard() {
           <span className="text-sm text-[var(--muted-ink)]">Capacity: 1 active · 3 starts/hour · 10/day</span>
         </div>
 
-        <section className="grid gap-px border border-[var(--rule)] bg-[var(--rule)] sm:grid-cols-3" aria-label="Workflow performance">
-          <div className="bg-emerald-50/70 p-5"><span className="text-xs font-semibold uppercase tracking-[0.1em] text-emerald-800">Published runs</span><strong className="mt-3 block text-3xl font-medium tracking-[-0.04em]">{metrics ? metrics.publishedRuns : "—"}</strong><span className="mt-2 block text-sm text-[var(--muted-ink)]">Recent workflow history</span></div>
-          <div className={`border-0 p-5 ${publishRateTone}`}><span className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--muted-ink)]">Observed publish rate</span><strong className="mt-3 block text-3xl font-medium tracking-[-0.04em]">{metrics?.publishRate !== null && metrics?.publishRate !== undefined ? `${metrics.publishRate}%` : "—"}</strong><span className="mt-2 block text-sm text-[var(--muted-ink)]">{metrics ? `${metrics.publishedRuns} of ${metrics.completedRuns} completed runs` : "Loading completed runs"}</span></div>
-          <div className="bg-violet-50/70 p-5"><span className="text-xs font-semibold uppercase tracking-[0.1em] text-violet-800">Typical API cost</span><strong className="mt-3 block text-3xl font-medium tracking-[-0.04em]">{metrics?.costRange || ESTIMATED_API_COST_RANGE}</strong><span className="mt-2 block text-sm text-[var(--muted-ink)]">Estimate per report · Vercel excluded</span></div>
+        <section className="grid border-b border-l border-[var(--rule)] sm:grid-cols-3" aria-label="Workflow performance">
+          <div className="relative border-r border-t border-[var(--rule)] bg-white p-5"><span className="absolute inset-x-0 top-0 h-[3px] bg-emerald-600" /><span className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--muted-ink)]">Published runs</span><strong className="mt-3 block text-3xl font-medium tracking-[-0.04em]">{metrics ? metrics.publishedRuns : "—"}</strong><span className="mt-2 block text-sm text-[var(--muted-ink)]">Recent workflow history</span></div>
+          <div className="relative border-r border-t border-[var(--rule)] bg-white p-5"><span className={`absolute inset-x-0 top-0 h-[3px] ${publishRateRule}`} /><span className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--muted-ink)]">Observed publish rate</span><strong className="mt-3 block text-3xl font-medium tracking-[-0.04em]">{metrics?.publishRate !== null && metrics?.publishRate !== undefined ? `${metrics.publishRate}%` : "—"}</strong><span className="mt-2 block text-sm text-[var(--muted-ink)]">{metrics ? `${metrics.publishedRuns} of ${metrics.completedRuns} completed runs` : "Loading completed runs"}</span></div>
+          <div className="relative border-r border-t border-[var(--rule)] bg-white p-5"><span className="absolute inset-x-0 top-0 h-[3px] bg-[var(--brand)]" /><span className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--muted-ink)]">Typical API cost</span><strong className="mt-3 block text-3xl font-medium tracking-[-0.04em]">{metrics?.costRange || ESTIMATED_API_COST_RANGE}</strong><span className="mt-2 block text-sm text-[var(--muted-ink)]">Estimate per report · Vercel excluded</span></div>
         </section>
         <p className="mt-3 text-xs text-[var(--muted-ink)]">Publish rate measures completed runs that produced a report; it is not a research-accuracy score. Exact per-run API metering is not yet stored.</p>
 
@@ -106,24 +106,25 @@ export function ResearchDashboard() {
               <div className="relative min-w-0 flex-1 md:w-80">
                 <label className="sr-only" htmlFor="run-search">Search reports by company or domain</label>
                 <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--muted-ink)]" />
-                <input id="run-search" type="text" inputMode="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search company or domain" className="h-11 w-full rounded-[3px] border border-[var(--rule)] bg-white pl-10 pr-9 text-sm outline-none transition focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10" />
+                <input id="run-search" type="text" inputMode="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search company or domain" className="h-11 w-full border border-[var(--rule)] bg-white pl-10 pr-9 text-sm outline-none transition focus:border-[var(--brand)]" />
                 {query ? <button type="button" onClick={() => setQuery("")} aria-label="Clear search" className="absolute right-2 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-full text-[var(--muted-ink)] hover:bg-slate-100 hover:text-[var(--ink)]"><X className="size-3.5" /></button> : null}
               </div>
-              <button onClick={() => { setLoading(true); void loadJobs(); }} aria-label="Refresh workflow history" className="inline-flex h-11 shrink-0 items-center gap-2 rounded-[3px] border border-[var(--rule)] bg-white px-4 text-sm font-medium text-[var(--brand)] transition hover:border-[var(--brand)] hover:bg-violet-50"><RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} /><span className="hidden sm:inline">Refresh</span></button>
+              <button onClick={() => { setLoading(true); void loadJobs(); }} aria-label="Refresh workflow history" className="inline-flex h-11 shrink-0 items-center gap-2 border border-[var(--rule)] bg-white px-4 text-sm font-medium text-[var(--brand)] transition hover:border-[var(--brand)]"><RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} /><span className="hidden sm:inline">Refresh</span></button>
             </div>
           </div>
-          <div className="overflow-hidden rounded-[4px] border border-[var(--rule)] bg-white">
+          <div className="overflow-hidden border-y-2 border-[var(--ink)] bg-transparent">
             <div className="hidden grid-cols-[1.25fr_0.75fr_0.55fr_0.65fr_28px] gap-4 border-b border-[var(--rule)] bg-slate-50 px-4 py-3 text-[0.68rem] font-bold uppercase tracking-[0.1em] text-[var(--muted-ink)] sm:grid"><span>Account</span><span>Run date</span><span>Status</span><span>API cost</span><span className="sr-only">Open</span></div>
             {filteredJobs.map((job) => {
               const destination = job.reportUrl || job.jobUrl || "#";
               let host = job.inputUrl;
               try { host = new URL(job.inputUrl).hostname.replace(/^www\./, ""); } catch { /* Keep raw input. */ }
-              return <Link key={job.id} href={destination} className="group relative grid grid-cols-2 gap-x-4 gap-y-5 border-b border-[var(--rule)] px-4 py-4 transition last:border-b-0 hover:bg-violet-50/45 focus-visible:bg-violet-50/45 focus-visible:outline-none sm:grid-cols-[1.25fr_0.75fr_0.55fr_0.65fr_28px] sm:items-center sm:gap-4">
-                <div className="col-span-2 pr-8 sm:col-span-1 sm:pr-0"><strong className="block font-semibold text-[var(--brand)] transition group-hover:text-violet-700 group-hover:underline group-hover:decoration-violet-300 group-hover:underline-offset-4">{job.companyName}</strong><span className="mt-1 block text-sm font-medium text-[var(--lime-deep)]">{host || "Resolving company"}</span></div>
+              const status = statusPresentation(job.status);
+              return <Link key={job.id} href={destination} className="group relative grid grid-cols-2 gap-x-4 gap-y-5 border-b border-[var(--rule)] px-4 py-4 transition last:border-b-0 hover:bg-white focus-visible:bg-white focus-visible:outline-none sm:grid-cols-[1.25fr_0.75fr_0.55fr_0.65fr_28px] sm:items-center sm:gap-4">
+                <div className="col-span-2 pr-8 sm:col-span-1 sm:pr-0"><strong className="block font-semibold text-[var(--brand)] transition group-hover:underline group-hover:decoration-slate-400 group-hover:underline-offset-4">{job.companyName}</strong><span className="mt-1 block text-sm text-[var(--muted-ink)]">{host || "Resolving company"}</span></div>
                 <div><span className="mb-1 block text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[var(--muted-ink)] sm:hidden">Run date</span><span className="text-sm text-[var(--muted-ink)]">{new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(new Date(job.createdAt))}</span></div>
-                <div><span className="mb-1 block text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[var(--muted-ink)] sm:hidden">Status</span><span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${statusStyle(job.status)}`}>{job.status}</span></div>
+                <div><span className="mb-1 block text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[var(--muted-ink)] sm:hidden">Status</span><span className={`inline-flex items-center gap-2 text-xs font-semibold ${status.text}`}><span className={`size-2 rounded-full ${status.dot}`} />{job.status}</span></div>
                 <div className="col-span-2 sm:col-span-1"><span className="mb-1 block text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[var(--muted-ink)] sm:hidden">API cost</span><span className="text-sm font-medium text-[var(--ink)]">{costForStatus(job.status)}</span><span className="mt-0.5 block text-xs text-[var(--muted-ink)]">{job.status === "Published" ? "Estimate" : "Exact cost unavailable"}</span></div>
-                <ArrowRight className="absolute right-4 top-5 size-4 text-violet-500 transition group-hover:translate-x-0.5 group-hover:text-violet-700 sm:static" />
+                <ArrowRight className="absolute right-4 top-5 size-4 text-[var(--muted-ink)] transition group-hover:translate-x-0.5 group-hover:text-[var(--brand)] sm:static" />
               </Link>;
             })}
             {!loading && filteredJobs.length === 0 ? <div className="px-5 py-12 text-center"><p className="font-medium">No matching reports</p><p className="mt-1 text-sm text-[var(--muted-ink)]">Try another company name or domain.</p></div> : null}
