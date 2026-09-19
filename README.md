@@ -18,12 +18,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Production access
 
-Production is protected with HTTP Basic Authentication when both of these environment variables are configured:
-
-- `BASIC_AUTH_USER`
-- `BASIC_AUTH_PASSWORD`
-
-Credentials are stored in Vercel and are not committed to Git.
+The demonstration is publicly accessible. Pages send `noindex` directives to discourage search-engine indexing, but this is not access control.
 
 ## Validation
 

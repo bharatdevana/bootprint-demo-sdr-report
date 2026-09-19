@@ -4,6 +4,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "ClikWorks Account Qualification",
   description: "A private SDR account qualification brief generated from a company website.",
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+  },
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
