@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ClikWorks Account Qualification",
-  description: "A private SDR account qualification brief generated from a company website.",
+  title: "ClikWorks Account Research",
+  description: "Internal account research workflow and report history.",
   robots: {
     index: false,
     follow: false,
