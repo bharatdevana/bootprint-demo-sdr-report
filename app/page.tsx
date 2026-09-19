@@ -1,6 +1,5 @@
-import { AccountBriefPage } from "@/components/account-brief-page";
-import { specialtyBoxBrief } from "@/lib/account-brief-data";
+import { ResearchDashboard } from "@/components/research-dashboard";
 
 export default function Home() {
-  return <AccountBriefPage brief={specialtyBoxBrief} />;
+  return <ResearchDashboard />;
 }

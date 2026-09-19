@@ -1,25 +1,28 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowRight, Building2, Check, ExternalLink, UserRound, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { AccountBrief } from "@/lib/account-brief-data";
 
 export function AccountBriefPage({ brief }: { brief: AccountBrief }) {
+  const router = useRouter();
   const [url, setUrl] = useState(brief.website);
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setBusy(true);
+    setError("");
     try {
-      const hostname = new URL(url).hostname.replace(/^www\./, "");
-      if (hostname === "specialtybox.com") window.location.assign("/");
-      else if (hostname === "joshpackaging.com") window.location.assign("/josh-packaging");
-      else setError("This local calibration currently contains two completed account briefs.");
-    } catch {
-      setError("Enter a valid company website.");
-    }
+      const response = await fetch("/api/research", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }) });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "The report could not be started.");
+      router.push(result.jobUrl);
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "The report could not be started."); setBusy(false); }
   }
 
   return (
@@ -34,7 +37,7 @@ export function AccountBriefPage({ brief }: { brief: AccountBrief }) {
           <form onSubmit={handleSubmit} className="mt-5 flex max-w-4xl flex-col gap-3 sm:flex-row">
             <label className="sr-only" htmlFor="company-url">Company website</label>
             <Input id="company-url" type="url" value={url} onChange={(event) => { setUrl(event.target.value); setError(""); }} placeholder="https://company.com" required className="h-14 flex-1 rounded-[4px] border-white/18 bg-white px-5 text-base text-[var(--brand)] shadow-none placeholder:text-slate-400 focus-visible:border-[var(--lime)] focus-visible:ring-[var(--lime)]/20" />
-            <Button type="submit" className="h-14 rounded-[4px] bg-[var(--lime)] px-7 text-base font-semibold text-[var(--brand)] hover:bg-[#72f49d] focus-visible:ring-[var(--lime)]/40">Open account brief<ArrowRight /></Button>
+            <Button disabled={busy} type="submit" className="h-14 rounded-[4px] bg-[var(--lime)] px-7 text-base font-semibold text-[var(--brand)] hover:bg-[#72f49d] focus-visible:ring-[var(--lime)]/40">{busy ? "Starting research…" : "Create account brief"}<ArrowRight /></Button>
           </form>
           <p className="mt-3 text-sm text-white/50">Public information only. Facts, estimates and open questions are labelled separately.</p>
           {error ? <p className="mt-2 text-sm text-amber-200" role="alert">{error}</p> : null}
@@ -55,7 +58,7 @@ export function AccountBriefPage({ brief }: { brief: AccountBrief }) {
           </aside>
 
           <article className="brief-body">
-            <div className="company-heading"><div className={`target-logo-card ${brief.logoTone === "dark" ? "target-logo-card-dark" : ""}`} aria-label={`${brief.companyName} logo`}><img className="target-logo-image" src={brief.logoUrl} alt={brief.companyName} /></div><div><p className="eyebrow text-[var(--muted-ink)]">Account brief · researched {brief.researchedOn}</p><h2>{brief.companyName}</h2><p>{brief.description}</p><span className="logo-source">Official website asset</span></div></div>
+            <div className="company-heading"><div className={`target-logo-card ${brief.logoTone === "dark" ? "target-logo-card-dark" : ""}`} aria-label={`${brief.companyName} logo`}>{brief.logoUrl ? <img className="target-logo-image" src={brief.logoUrl} alt={brief.companyName} /> : <span className="customer-wordmark">{brief.companyName}</span>}</div><div><p className="eyebrow text-[var(--muted-ink)]">Account brief · researched {brief.researchedOn}</p><h2>{brief.companyName}</h2><p>{brief.description}</p><span className="logo-source">{brief.logoUrl ? "Official website asset" : "Verified name · logo not retained"}</span></div></div>
             <section className="brief-section summary-grid"><div><p className="section-number">01</p><h3>What they sell</h3></div><div className="prose-copy"><p>{brief.whatTheySell}</p><div className="service-list">{brief.services.map((service) => <span key={service}>{service}</span>)}</div></div></section>
             <section className="brief-section summary-grid"><div><p className="section-number">02</p><h3>Who buys</h3></div><div className="prose-copy"><p>{brief.whoBuys}</p><div className="buyer-row"><Building2 /><div><strong>Best observable segment</strong><span>{brief.bestSegment}</span></div></div><div className="buyer-row"><Users /><div><strong>Likely commercial buyer</strong><span>{brief.likelyBuyer}</span></div></div></div></section>
             <section className="brief-section"><div className="section-head"><div><p className="section-number">03</p><h3>Customer evidence</h3></div><p>Named customers help the SDR understand who already buys and which examples may be relevant.</p></div><div className="customer-grid">{brief.customerEvidence.map((customer) => <a className="customer-item" key={customer.name} href={customer.url} target="_blank" rel="noreferrer"><div className="customer-wordmark">{customer.name}<ExternalLink /></div><strong>{customer.relevance}</strong><span>{customer.evidence}</span></a>)}</div></section>
