@@ -138,7 +138,7 @@ export function validateCustomerDisplay<T extends CustomerDisplayContract>(resea
 }
 
 export type PeopleDisplayContract = {
-  people: Array<{ name: string; title: string; relevance: string; linkedin_url: string; evidence: string }>;
+  people: Array<{ name: string; title: string; relevance: string; linkedin_url: string | null; evidence: string }>;
 };
 
 export function validatePeopleDisplay<T extends PeopleDisplayContract>(research: T): T {
@@ -151,7 +151,9 @@ export function validatePeopleDisplay<T extends PeopleDisplayContract>(research:
     requireWords(violations, `people[${index}].evidence`, person.evidence, 18);
     rejectInlineLinks(violations, `people[${index}].relevance`, person.relevance);
     rejectInlineLinks(violations, `people[${index}].evidence`, person.evidence);
-    if (!cleanHttpsUrl(person.linkedin_url)) violations.push(`people[${index}].linkedin_url is not a valid HTTPS URL`);
+    if (person.linkedin_url && !cleanHttpsUrl(person.linkedin_url)) {
+      violations.push(`people[${index}].linkedin_url is not a valid HTTPS URL`);
+    }
   });
   if (violations.length) throw new ResearchContractError(violations);
   return research;

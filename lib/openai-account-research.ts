@@ -99,7 +99,7 @@ const peopleSchema = {
         additionalProperties: false,
         properties: {
           name: { type: "string", maxLength: 70 }, title: { type: "string", maxLength: 70 },
-          relevance: { type: "string", maxLength: 100 }, linkedin_url: { type: "string", maxLength: 2048 },
+          relevance: { type: "string", maxLength: 100 }, linkedin_url: { type: ["string", "null"], maxLength: 2048 },
           match_state: { type: "string", enum: ["confirmed", "probable"] }, evidence: { type: "string", maxLength: 140 },
         },
         required: ["name", "title", "relevance", "linkedin_url", "match_state", "evidence"],
@@ -209,7 +209,7 @@ export type CompanyResearch = {
   conflicts: string[]; sources: Array<{ name: string; detail: string; url: string }>;
 };
 export type CustomerResearch = { customers: AccountBrief["customerEvidence"] };
-export type PeopleResearch = { people: Array<{ name: string; title: string; relevance: string; linkedin_url: string; match_state: "confirmed" | "probable"; evidence: string }> };
+export type PeopleResearch = { people: Array<{ name: string; title: string; relevance: string; linkedin_url: string | null; match_state: "confirmed" | "probable"; evidence: string }> };
 export type Synthesis = { recommendation: string; lead_with: string; ask: string; do_not_assume: string };
 
 export function researchCompany(url: string) {
@@ -258,7 +258,8 @@ export function researchPeople(company: CompanyResearch) {
     "account_people_research",
     [
       "Identify no more than three current people relevant to a sales conversation: growth owner, sales or business-development leader, and operations or reply owner.",
-      "Require a corroborated exact person-company match. Include only confirmed or strong probable matches; omit unresolved roles rather than inventing a person or LinkedIn URL.",
+      "Require a corroborated exact person-company match. Include only confirmed or strong probable matches; omit unresolved people rather than inventing a person.",
+      "A LinkedIn profile is optional. Return linkedin_url as null when no exact verified profile is available; do not omit an otherwise corroborated person and do not guess a URL.",
       "Preserve a material stale-title conflict in the evidence field. Do not search for or return profile photos.",
       "No markdown or inline citations. Name <=5 words, title <=8 words, relevance <=12 words, and evidence <=18 words.",
     ].join(" "),
@@ -289,8 +290,8 @@ function initials(name: string) {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "?";
 }
 
-function safeHttps(value: string) {
-  return cleanHttpsUrl(value);
+function safeHttps(value: string | null | undefined) {
+  return value ? cleanHttpsUrl(value) : "";
 }
 
 export function buildAccountBrief(company: CompanyResearch, customers: CustomerResearch, people: PeopleResearch, synthesis: Synthesis): AccountBrief {
@@ -324,7 +325,7 @@ export function buildAccountBrief(company: CompanyResearch, customers: CustomerR
     decisionMakers: people.people.map((person) => ({
       name: person.name, title: person.title, relevance: person.relevance,
       linkedin: safeHttps(person.linkedin_url).replace(/^https?:\/\//, "").replace(/\/$/, "") || "No verified profile",
-      profileUrl: safeHttps(person.linkedin_url) || company.canonical_url,
+      profileUrl: safeHttps(person.linkedin_url),
       confidence: person.match_state === "confirmed" ? "Confirmed" : "Probable match",
       confidenceTone: person.match_state,
       initials: initials(person.name), evidence: person.evidence,

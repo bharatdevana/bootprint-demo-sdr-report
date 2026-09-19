@@ -36,9 +36,9 @@ The model returns content for a fixed interface, not an open-ended research memo
 | Evidence register | 5 material sources; name 8, detail 10 words |
 | Total dynamic report copy | 450 words |
 
-No display field may contain Markdown, an inline URL, a citation token, a repeated section caveat, or a tracking parameter. Customer caveats and contact rules appear once at section level. Conflicts belong in the evidence ledger, not the summary rail.
+No display field may contain Markdown, an inline URL, a citation token, a repeated section caveat, or a tracking parameter. Customer caveats and contact rules appear once at section level. Conflicts belong in the evidence ledger, not the summary rail. A decision-maker LinkedIn URL is optional: retain a corroborated person with `null` when no exact profile is verified.
 
-The API schema enforces character and item limits. Deterministic validators enforce word limits, HTTPS URLs, source count, and the total display budget. A failed draft receives one no-browse repair pass. If the repaired artifact still fails, the workflow stops before publication. The renderer never silently truncates a factual claim.
+The API schema enforces character and item limits. Deterministic validators enforce word limits, required source URLs, optional profile URLs when present, source count, and the total display budget. A failed draft receives one no-browse repair pass. If the repaired artifact still fails, the workflow stops before publication. The renderer never silently truncates a factual claim.
 
 ## Input
 

@@ -8,6 +8,7 @@ import {
   ResearchContractError,
   validateAccountBriefBudget,
   validateCustomerDisplay,
+  validatePeopleDisplay,
   validateSynthesisDisplay,
 } from "@/lib/research-guardrails";
 
@@ -46,6 +47,14 @@ test("rejects handoff prose over the field budget", () => {
     }),
     ResearchContractError,
   );
+});
+
+test("allows a corroborated person without a verified LinkedIn profile", () => {
+  const people = { people: [{
+    name: "Avery Morgan", title: "Director of Sales", relevance: "Owns commercial conversations",
+    linkedin_url: null, evidence: "Current role confirmed on the official leadership page",
+  }] };
+  assert.equal(validatePeopleDisplay(people), people);
 });
 
 test("approved calibration reports remain inside the total copy budget", () => {
