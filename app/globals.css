@@ -91,9 +91,9 @@ button, input { font: inherit; }
 .contact-facts a { display: inline-flex; align-items: center; gap: 5px; color: var(--brand); text-decoration: none; }
 .contact-facts a:hover { text-decoration: underline; }
 .contact-facts a svg { width: 12px; height: 12px; flex: 0 0 auto; }
-.contact-rule { margin-top: 18px; padding: 16px; border-left: 3px solid var(--amber); background: #faf7ed; }
+.contact-rule { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 12px; margin-top: 18px; padding: 16px; border-left: 3px solid var(--amber); background: #faf7ed; }
 .contact-rule svg { width: 19px; height: 19px; color: #805700; }
-.contact-rule p { margin: 0; color: var(--muted-ink); font-size: 0.84rem; line-height: 1.5; }
+.contact-rule p { min-width: 0; margin: 0; color: var(--muted-ink); font-size: 0.84rem; line-height: 1.5; }
 .contact-rule strong { display: block; margin-bottom: 2px; color: var(--ink); }
 .edge-case-list { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 12px; border-top: 1px solid var(--rule); border-left: 1px solid var(--rule); }
 .edge-case-list span { padding: 11px 12px; border-right: 1px solid var(--rule); border-bottom: 1px solid var(--rule); color: var(--muted-ink); font-size: 0.74rem; line-height: 1.4; }
