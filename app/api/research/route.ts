@@ -15,8 +15,11 @@ async function enforceDemoQuota() {
     throw new Error("Another report is already running. Open it from Recent reports or try again when it finishes.");
   }
   const now = Date.now();
-  const hourly = runs.filter((run) => now - run.createdAt.getTime() < 60 * 60 * 1000).length;
-  const daily = runs.filter((run) => now - run.createdAt.getTime() < 24 * 60 * 60 * 1000).length;
+  const configuredReset = Date.parse(process.env.DEMO_QUOTA_RESET_AT || "");
+  const quotaResetAt = Number.isFinite(configuredReset) ? configuredReset : 0;
+  const quotaRuns = runs.filter((run) => run.createdAt.getTime() >= quotaResetAt);
+  const hourly = quotaRuns.filter((run) => now - run.createdAt.getTime() < 60 * 60 * 1000).length;
+  const daily = quotaRuns.filter((run) => now - run.createdAt.getTime() < 24 * 60 * 60 * 1000).length;
   if (hourly >= 3 || daily >= 10) throw new Error("The public demo has reached its research limit. Try again later.");
 }
 
