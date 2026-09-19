@@ -1,9 +1,9 @@
 # ClikWorks Account Brief Research Pipeline
 
-Status: local calibration draft  
+Status: implemented generation contract
 Calibration account: `https://specialtybox.com`  
 Research date: `2026-09-19`  
-Default execution: sequential, local only, no publication
+Default execution: sequential durable workflow, publish only after validation
 
 ## Operating model
 
@@ -17,6 +17,28 @@ Every material field uses one of four evidence states:
 - `unknown`: not established by the retained evidence.
 
 Use `null` for missing structured values. Never replace `null` with plausible copy.
+
+## Display contract and publication gate
+
+The model returns content for a fixed interface, not an open-ended research memo. These limits apply before rendering:
+
+| Element | Limit |
+|---|---:|
+| Company description | 24 words |
+| Summary-rail value | 4 to 5 words |
+| What they sell | 35 words |
+| Who buys | 30 words |
+| Service labels | 4 items, 6 words each |
+| Customer evidence | 3 items; name 6, evidence 8, relevance 10 words |
+| Decision makers | 3 items; title 8, relevance 12, evidence 18 words |
+| Fit evidence note | 10 words for model-supplied notes |
+| Recommendation and each SDR handoff field | 25 words |
+| Evidence register | 5 material sources; name 8, detail 10 words |
+| Total dynamic report copy | 450 words |
+
+No display field may contain Markdown, an inline URL, a citation token, a repeated section caveat, or a tracking parameter. Customer caveats and contact rules appear once at section level. Conflicts belong in the evidence ledger, not the summary rail.
+
+The API schema enforces character and item limits. Deterministic validators enforce word limits, HTTPS URLs, source count, and the total display budget. A failed draft receives one no-browse repair pass. If the repaired artifact still fails, the workflow stops before publication. The renderer never silently truncates a factual claim.
 
 ## Input
 
@@ -148,7 +170,7 @@ Require a verified company identity, at least two first-party sources, a usable 
 
 ### Role
 
-Extract named customer evidence without turning logos into invented case studies.
+Extract no more than three named customer records without turning logos into invented case studies.
 
 ### Instructions
 
@@ -291,12 +313,12 @@ Use only validated artifacts from Stages 2 through 5. Do not browse. Write an in
 
 Produce:
 
-- one account summary of no more than 45 words;
+- one account summary of no more than 24 words;
 - `why_work_this_account` tied to accepted fit evidence;
-- `lead_with` based on an observable gap, not a diagnosis;
-- one discovery question;
-- one reason each ranked person matters;
-- `do_not_assume` containing unsupported claims to avoid;
+- `lead_with` based on an observable gap, not a diagnosis, no more than 25 words;
+- one discovery question, no more than 25 words;
+- one reason each ranked person matters, no more than 12 words;
+- `do_not_assume` containing unsupported claims to avoid, no more than 25 words;
 - the next research action when a material unknown remains.
 
 Never claim that the company needs ClikWorks, is actively buying, lacks a CRM, has unused data, or has no outbound motion unless directly established.
