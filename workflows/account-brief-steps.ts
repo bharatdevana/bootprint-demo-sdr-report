@@ -2,6 +2,7 @@ import { FatalError } from "workflow";
 import { buildAccountBrief, researchCompany, researchCustomers, researchPeople, synthesizeHandoff, type CompanyResearch, type CustomerResearch, type PeopleResearch } from "@/lib/openai-account-research";
 import { PROGRESS_STAGES, type ProgressEvent, type ProgressStage } from "@/lib/research-workflow";
 import { assertSafePublicUrl } from "@/lib/url-safety";
+import { detectLogoSurfaceTone } from "@/lib/logo-analysis";
 
 function fatal(error: unknown, label: string): never {
   throw new FatalError(`${label}: ${error instanceof Error ? error.message : String(error)}`);
@@ -58,7 +59,8 @@ export async function synthesisStep(company: CompanyResearch, customers: Custome
   "use step";
   try {
     const synthesis = await synthesizeHandoff(company, customers, people);
-    return buildAccountBrief(company, customers, people, synthesis);
+    const logoTone = await detectLogoSurfaceTone(company.logo_url);
+    return buildAccountBrief(company, customers, people, synthesis, logoTone);
   } catch (error) { fatal(error, "SDR handoff synthesis failed"); }
 }
 synthesisStep.maxRetries = 2;

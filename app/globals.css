@@ -30,7 +30,8 @@ button, input { font: inherit; }
 .brief-body { min-width: 0; padding: 36px clamp(24px, 4vw, 68px) 52px; }
 .company-heading { display: grid; grid-template-columns: 190px 1fr; gap: 28px; align-items: center; padding-bottom: 34px; }
 .target-logo-card { display: flex; align-items: center; gap: 12px; min-height: 92px; padding: 18px; border: 1px solid var(--rule); background: #fbfbf9; }
-.target-logo-card-dark { background: #005b43; border-color: #005b43; }
+.target-logo-card-light { background: #fbfbf9; }
+.target-logo-card-dark { background: var(--brand); border-color: var(--brand); }
 .target-logo-image { display: block; width: 100%; height: auto; max-height: 54px; object-fit: contain; }
 .target-logo-mark { display: grid; place-items: center; width: 44px; height: 52px; background: var(--brand); color: var(--lime); font-size: 1.2rem; font-weight: 800; }
 .target-logo-name { color: var(--brand); font-size: 0.92rem; font-weight: 850; letter-spacing: -0.03em; }

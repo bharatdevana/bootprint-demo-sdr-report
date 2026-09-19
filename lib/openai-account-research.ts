@@ -1,5 +1,6 @@
 import { classifyClikWorksFit, type FitEvidence } from "@/lib/fit-classifier";
 import type { AccountBrief } from "@/lib/account-brief-data";
+import type { LogoSurfaceTone } from "@/lib/logo-presentation";
 import {
   cleanHttpsUrl,
   cleanLinkedInProfileUrl,
@@ -257,6 +258,7 @@ export function researchCompany(url: string) {
       "Classify repeat purchase as confirmed or consumable only when the core offer is replenished, renewed, consumed, or reordered in normal customer operations.",
       "Keep outbound ownership unknown unless public evidence establishes a dedicated owner or its absence. Keep reply ownership unknown or likely unless explicit.",
       "Return an official logo asset only when referenced by an official company page; otherwise return an empty string.",
+      "Prefer the primary full-color or dark logo intended for a light surface. If only a white or reversed official asset is available, return it unchanged.",
       "Never infer revenue, internal systems, buying intent, adoption, or commercial performance. Return direct HTTPS sources.",
       "Write for the fixed report layout, not as a research memo. No markdown, inline links, citations, footnotes, preambles, or repeated caveats in display fields.",
       "DISPLAY CONTRACT: description <=24 words; employees_display <=5 words; headquarters is city and region only <=5 words; operating_since <=4 words; business_model <=4 words.",
@@ -374,7 +376,7 @@ function safeHttps(value: string | null | undefined) {
   return value ? cleanHttpsUrl(value) : "";
 }
 
-export function buildAccountBrief(company: CompanyResearch, customers: CustomerResearch, people: PeopleResearch, synthesis: Synthesis): AccountBrief {
+export function buildAccountBrief(company: CompanyResearch, customers: CustomerResearch, people: PeopleResearch, synthesis: Synthesis, logoTone?: LogoSurfaceTone): AccountBrief {
   const fit = classifyClikWorksFit({
     isB2B: company.is_b2b,
     employeeRange: company.employee_minimum !== null && company.employee_maximum !== null
@@ -394,6 +396,7 @@ export function buildAccountBrief(company: CompanyResearch, customers: CustomerR
     companyName: company.company_name,
     researchedOn: new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "America/New_York" }).format(new Date()),
     logoUrl: safeHttps(company.logo_url),
+    logoTone,
     description: company.description,
     score: fit.score, totalChecks: fit.totalChecks, fitLabel: fit.label, fitSummary: fit.summary,
     segment: deriveCompanySegment(company.employee_minimum, company.employee_maximum), employees: company.employees_display || "Not established",

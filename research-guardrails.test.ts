@@ -13,6 +13,7 @@ import {
   validateSynthesisDisplay,
 } from "@/lib/research-guardrails";
 import { mergeLinkedInProfiles, type PeopleResearch } from "@/lib/openai-account-research";
+import { classifyLogoPixels, inferLogoSurfaceTone } from "@/lib/logo-presentation";
 
 test("removes inline citation markup without truncating the claim", () => {
   assert.equal(
@@ -82,6 +83,19 @@ test("merges a separately verified profile only into the exact named person", ()
     match_state: "confirmed", match_reason: "Different person",
   }] });
   assert.equal(merged.people[0].linkedin_url, "https://www.linkedin.com/in/matthew-cheng-1342b3121");
+});
+
+test("uses a dark logo plate for white and reversed asset names", () => {
+  assert.equal(inferLogoSurfaceTone("https://example.com/PPC-Logo-White-Vertical.svg"), "dark");
+  assert.equal(inferLogoSurfaceTone("https://example.com/brand-reversed.png"), "dark");
+  assert.equal(inferLogoSurfaceTone("https://example.com/logo-primary.svg"), "light");
+  assert.equal(inferLogoSurfaceTone("https://example.com/logo.svg", "dark"), "dark");
+});
+
+test("selects the logo plate from visible pixel luminance", () => {
+  assert.equal(classifyLogoPixels(new Uint8Array([255, 255, 255, 255, 245, 245, 245, 255]), 4), "dark");
+  assert.equal(classifyLogoPixels(new Uint8Array([12, 18, 32, 255, 40, 60, 80, 255]), 4), "light");
+  assert.equal(classifyLogoPixels(new Uint8Array([255, 255, 255, 0]), 4), null);
 });
 
 test("approved calibration reports remain inside the total copy budget", () => {

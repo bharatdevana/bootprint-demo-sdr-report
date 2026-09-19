@@ -6,12 +6,14 @@ import { ArrowRight, Building2, Check, ExternalLink, UserRound, Users } from "lu
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { AccountBrief } from "@/lib/account-brief-data";
+import { inferLogoSurfaceTone } from "@/lib/logo-presentation";
 
 export function AccountBriefPage({ brief }: { brief: AccountBrief }) {
   const router = useRouter();
   const [url, setUrl] = useState(brief.website);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const logoSurface = inferLogoSurfaceTone(brief.logoUrl, brief.logoTone);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -58,7 +60,7 @@ export function AccountBriefPage({ brief }: { brief: AccountBrief }) {
           </aside>
 
           <article className="brief-body">
-            <div className="company-heading"><div className={`target-logo-card ${brief.logoTone === "dark" ? "target-logo-card-dark" : ""}`} aria-label={`${brief.companyName} logo`}>{brief.logoUrl ? <img className="target-logo-image" src={brief.logoUrl} alt={brief.companyName} /> : <span className="customer-wordmark">{brief.companyName}</span>}</div><div><p className="eyebrow text-[var(--muted-ink)]">Account brief · researched {brief.researchedOn}</p><h2>{brief.companyName}</h2><p>{brief.description}</p><span className="logo-source">{brief.logoUrl ? "Official website asset" : "Verified name · logo not retained"}</span></div></div>
+            <div className="company-heading"><div className={`target-logo-card target-logo-card-${logoSurface}`} aria-label={`${brief.companyName} logo`}>{brief.logoUrl ? <img className="target-logo-image" src={brief.logoUrl} alt={brief.companyName} /> : <span className="customer-wordmark">{brief.companyName}</span>}</div><div><p className="eyebrow text-[var(--muted-ink)]">Account brief · researched {brief.researchedOn}</p><h2>{brief.companyName}</h2><p>{brief.description}</p><span className="logo-source">{brief.logoUrl ? "Official website asset" : "Verified name · logo not retained"}</span></div></div>
             <section className="brief-section summary-grid"><div><p className="section-number">01</p><h3>What they sell</h3></div><div className="prose-copy"><p>{brief.whatTheySell}</p><div className="service-list">{brief.services.map((service) => <span key={service}>{service}</span>)}</div></div></section>
             <section className="brief-section summary-grid"><div><p className="section-number">02</p><h3>Who buys</h3></div><div className="prose-copy"><p>{brief.whoBuys}</p><div className="buyer-row"><Building2 /><div><strong>Best observable segment</strong><span>{brief.bestSegment}</span></div></div><div className="buyer-row"><Users /><div><strong>Likely commercial buyer</strong><span>{brief.likelyBuyer}</span></div></div></div></section>
             <section className="brief-section"><div className="section-head"><div><p className="section-number">03</p><h3>Customer evidence</h3></div><p>Company-stated relationships only. Contract value, recency and scope are not implied.</p></div><div className="customer-grid">{brief.customerEvidence.map((customer) => <a className="customer-item" key={customer.name} href={customer.url} target="_blank" rel="noreferrer"><div className="customer-wordmark">{customer.name}<ExternalLink /></div><strong>{customer.relevance}</strong><span>{customer.evidence}</span></a>)}</div></section>
