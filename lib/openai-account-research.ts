@@ -1,3 +1,4 @@
+import { assertDemoActive } from "@/lib/demo-limits.mjs";
 import { classifyClikWorksFit, type FitEvidence } from "@/lib/fit-classifier";
 import type { AccountBrief } from "@/lib/account-brief-data";
 import type { LogoSurfaceTone } from "@/lib/logo-presentation";
@@ -161,6 +162,7 @@ type WebSearchOptions = boolean | {
 };
 
 async function structuredCall<T>(name: string, instructions: string, input: string, schema: object, webSearch: WebSearchOptions): Promise<T> {
+  assertDemoActive();
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error("OPENAI_API_KEY is not configured.");
   const body: Record<string, unknown> = {

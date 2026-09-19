@@ -26,6 +26,7 @@ export function ResearchDashboard() {
   const [jobs, setJobs] = useState<JobSummary[]>([...SEEDED_REPORTS]);
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [loading, setLoading] = useState(true);
+  const [demo, setDemo] = useState<{ available: boolean; message: string } | null>(null);
   const [query, setQuery] = useState("");
   const filteredJobs = useMemo(() => filterJobsByQuery(jobs, query), [jobs, query]);
 
@@ -38,7 +39,16 @@ export function ResearchDashboard() {
     } finally { setLoading(false); }
   }
 
-  useEffect(() => { void loadJobs(); }, []);
+  useEffect(() => {
+    void loadJobs();
+    async function refreshLimit() {
+      try { const response = await fetch("/api/research", { cache: "no-store" }); if (!response.ok) throw Error(); setDemo(await response.json()); }
+      catch { setDemo({ available: false, message: "Run limit unavailable. Please try again later." }); }
+    }
+    void refreshLimit();
+    const timer = setInterval(() => { void refreshLimit(); }, 60000);
+    return () => clearInterval(timer);
+  }, []);
 
   async function submit(event: FormEvent) {
     event.preventDefault(); setBusy(true); setError("");
@@ -65,7 +75,7 @@ export function ResearchDashboard() {
       <section className="mx-auto max-w-[1280px] px-5 py-10 sm:px-8 lg:px-10 lg:py-14">
         <div className="flex flex-col justify-between gap-5 pb-8 md:flex-row md:items-end">
           <div><p className="text-sm font-medium text-[#686875]">Internal workflow</p><h1 className="mt-2 text-4xl font-semibold tracking-[-0.055em] sm:text-5xl">Account research</h1><p className="mt-3 max-w-2xl text-[#626270]">Generate and review account qualification briefs from public company information.</p></div>
-          <span className="text-sm text-[#686875]">Capacity: 1 active · 3 starts/hour · 10/day</span>
+          <span className="text-sm text-[#686875]">Capacity: 1 active · 3 starts/hour · 20/day</span>
         </div>
 
         <section className="grid overflow-hidden rounded-2xl border border-[#dedff0] bg-white shadow-[0_14px_38px_rgba(46,42,83,0.06)] sm:grid-cols-3" aria-label="Workflow performance">
@@ -79,11 +89,12 @@ export function ResearchDashboard() {
           <div><p className="text-sm font-medium text-[#686875]">New research run</p><h2 className="mt-2 text-2xl font-semibold tracking-[-0.035em]">Company website</h2></div>
           <div className="mt-4 flex flex-col gap-3 sm:flex-row">
             <label className="sr-only" htmlFor="research-url">Company website</label><input id="research-url" value={url} onChange={(event) => { setUrl(event.target.value); setError(""); }} placeholder="https://company.com" required className="h-14 min-w-0 flex-1 rounded-xl border border-[#dcddea] bg-[#fafaff] px-5 text-base outline-none transition focus:border-[#111114] focus:bg-white" />
-            <button disabled={busy} className="inline-flex h-14 items-center justify-center gap-3 rounded-xl bg-[#111114] px-8 font-semibold text-white transition hover:bg-[#2c2c31] disabled:opacity-60">
+            <button disabled={busy || !demo?.available} className="inline-flex h-14 items-center justify-center gap-3 rounded-xl bg-[#111114] px-8 font-semibold text-white transition hover:bg-[#2c2c31] disabled:opacity-60">
               {busy ? <><RefreshCw className="size-4 animate-spin" />Starting run</> : <>Start research<ArrowRight className="size-4" /></>}
             </button>
           </div>
           <div className="mt-3 text-sm text-[#747480]">Public sources only · People photos disabled · Unsupported output stops before publication</div>
+          <p className="mt-3 text-xs text-[#686875]" role="status">{demo?.message || "Checking demo availability…"}</p>
           {error ? <p className="mt-3 text-sm font-medium text-red-700" role="alert">{error}</p> : null}
         </form>
 

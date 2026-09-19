@@ -1,3 +1,4 @@
+import { assertDemoActive } from "@/lib/demo-limits.mjs";
 import { FatalError } from "workflow";
 import { buildAccountBrief, researchCompany, researchCustomers, researchPeople, synthesizeHandoff, type CompanyResearch, type CustomerResearch, type PeopleResearch } from "@/lib/openai-account-research";
 import { PROGRESS_STAGES, type ProgressEvent, type ProgressStage } from "@/lib/research-workflow";
@@ -29,7 +30,7 @@ closeProgress.maxRetries = 1;
 
 export async function verifyInputStep(inputUrl: string) {
   "use step";
-  try { return await assertSafePublicUrl(inputUrl); }
+  try { assertDemoActive(); return await assertSafePublicUrl(inputUrl); }
   catch (error) { fatal(error, "Company verification failed"); }
 }
 verifyInputStep.maxRetries = 1;
