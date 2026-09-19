@@ -49,6 +49,17 @@ export type DashboardMetrics = {
 
 export const ESTIMATED_API_COST_RANGE = "$0.25–$0.40";
 
+export function filterJobsByQuery(jobs: JobSummary[], query: string): JobSummary[] {
+  const normalizedQuery = query.trim().toLowerCase();
+  if (!normalizedQuery) return jobs;
+
+  return jobs.filter((job) => {
+    let domain = job.inputUrl;
+    try { domain = new URL(job.inputUrl).hostname.replace(/^www\./, ""); } catch { /* Keep raw input. */ }
+    return `${job.companyName} ${domain}`.toLowerCase().includes(normalizedQuery);
+  });
+}
+
 export function calculateDashboardMetrics(jobs: JobSummary[]): DashboardMetrics {
   const publishedRuns = jobs.filter((job) => job.status === "Published").length;
   const completedRuns = jobs.filter((job) => ["Published", "Stopped safely", "failed", "cancelled"].includes(job.status)).length;

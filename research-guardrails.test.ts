@@ -14,7 +14,7 @@ import {
 } from "@/lib/research-guardrails";
 import { mergeLinkedInProfiles, type PeopleResearch } from "@/lib/openai-account-research";
 import { classifyLogoPixels, inferLogoSurfaceTone } from "@/lib/logo-presentation";
-import { calculateDashboardMetrics } from "@/lib/research-workflow";
+import { calculateDashboardMetrics, filterJobsByQuery } from "@/lib/research-workflow";
 
 test("removes inline citation markup without truncating the claim", () => {
   assert.equal(
@@ -110,6 +110,17 @@ test("reports publish rate from completed workflow runs only", () => {
   assert.equal(metrics.publishedRuns, 2);
   assert.equal(metrics.completedRuns, 3);
   assert.equal(metrics.publishRate, 67);
+});
+
+test("filters workflow history by company name or domain", () => {
+  const base = { status: "Published", createdAt: "2026-09-19T00:00:00Z" };
+  const jobs = [
+    { ...base, id: "1", companyName: "Specialty Box", inputUrl: "https://specialtybox.com" },
+    { ...base, id: "2", companyName: "Josh Packaging", inputUrl: "https://www.joshpackaging.com" },
+  ];
+  assert.deepEqual(filterJobsByQuery(jobs, "specialty"), [jobs[0]]);
+  assert.deepEqual(filterJobsByQuery(jobs, "joshpackaging.com"), [jobs[1]]);
+  assert.deepEqual(filterJobsByQuery(jobs, "  "), jobs);
 });
 
 test("approved calibration reports remain inside the total copy budget", () => {
