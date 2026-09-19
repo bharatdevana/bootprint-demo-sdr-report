@@ -30,6 +30,36 @@ export type WorkflowResult = {
   details?: string[];
 };
 
+export type JobSummary = {
+  id: string;
+  companyName: string;
+  inputUrl: string;
+  reportUrl?: string;
+  jobUrl?: string;
+  status: string;
+  createdAt: string;
+};
+
+export type DashboardMetrics = {
+  publishedRuns: number;
+  completedRuns: number;
+  publishRate: number | null;
+  costRange: string;
+};
+
+export const ESTIMATED_API_COST_RANGE = "$0.25–$0.40";
+
+export function calculateDashboardMetrics(jobs: JobSummary[]): DashboardMetrics {
+  const publishedRuns = jobs.filter((job) => job.status === "Published").length;
+  const completedRuns = jobs.filter((job) => ["Published", "Stopped safely", "failed", "cancelled"].includes(job.status)).length;
+  return {
+    publishedRuns,
+    completedRuns,
+    publishRate: completedRuns ? Math.round((publishedRuns / completedRuns) * 100) : null,
+    costRange: ESTIMATED_API_COST_RANGE,
+  };
+}
+
 export const SEEDED_REPORTS = [
   { id: "specialty-box", companyName: "Specialty Box", inputUrl: "https://specialtybox.com", reportUrl: "/reports/specialty-box", status: "Published", createdAt: "2026-09-19T12:00:00-04:00" },
   { id: "josh-packaging", companyName: "Josh Packaging, Inc.", inputUrl: "https://www.joshpackaging.com/", reportUrl: "/josh-packaging", status: "Published", createdAt: "2026-09-19T13:00:00-04:00" },

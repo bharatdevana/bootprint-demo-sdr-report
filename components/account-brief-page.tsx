@@ -1,48 +1,17 @@
-"use client";
-
-import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowRight, Building2, Check, ExternalLink, UserRound, Users } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import Link from "next/link";
+import { ArrowLeft, Building2, Check, ExternalLink, Plus, UserRound, Users } from "lucide-react";
 import type { AccountBrief } from "@/lib/account-brief-data";
 import { inferLogoSurfaceTone } from "@/lib/logo-presentation";
 
 export function AccountBriefPage({ brief }: { brief: AccountBrief }) {
-  const router = useRouter();
-  const [url, setUrl] = useState(brief.website);
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
   const logoSurface = inferLogoSurfaceTone(brief.logoUrl, brief.logoTone);
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setBusy(true);
-    setError("");
-    try {
-      const response = await fetch("/api/research", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }) });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || "The report could not be started.");
-      router.push(result.jobUrl);
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "The report could not be started."); setBusy(false); }
-  }
 
   return (
     <main className="min-h-screen bg-[var(--paper)] text-[var(--ink)]">
       <header className="border-b border-white/10 bg-[var(--brand)] text-white">
         <div className="mx-auto flex max-w-[1480px] items-center justify-between px-5 py-4 sm:px-8 lg:px-12">
-          <div className="flex items-center gap-5"><div className="brand-wordmark" aria-label="ClikWorks">CLIK<span>/</span>WORKS</div><div className="hidden h-5 w-px bg-white/20 sm:block" /><p className="hidden text-sm text-white/62 sm:block">Account qualification</p></div>
-          <div className="flex items-center gap-3 text-sm text-white/70"><span className="status-light" aria-hidden="true" />Internal tool</div>
-        </div>
-        <div className="mx-auto max-w-[1480px] px-5 pb-7 pt-6 sm:px-8 lg:px-12">
-          <div className="tool-intro"><div><p className="eyebrow text-[var(--lime)]">Account qualification</p><h1>Research a company</h1><p>Enter a website to create an internal qualification brief.</p></div></div>
-          <form onSubmit={handleSubmit} className="mt-5 flex max-w-4xl flex-col gap-3 sm:flex-row">
-            <label className="sr-only" htmlFor="company-url">Company website</label>
-            <Input id="company-url" type="url" value={url} onChange={(event) => { setUrl(event.target.value); setError(""); }} placeholder="https://company.com" required className="h-14 flex-1 rounded-[4px] border-white/18 bg-white px-5 text-base text-[var(--brand)] shadow-none placeholder:text-slate-400 focus-visible:border-[var(--lime)] focus-visible:ring-[var(--lime)]/20" />
-            <Button disabled={busy} type="submit" className="h-14 rounded-[4px] bg-[var(--lime)] px-7 text-base font-semibold text-[var(--brand)] hover:bg-[#72f49d] focus-visible:ring-[var(--lime)]/40">{busy ? "Starting research…" : "Create account brief"}<ArrowRight /></Button>
-          </form>
-          <p className="mt-3 text-sm text-white/50">Public information only. Facts, estimates and open questions are labelled separately.</p>
-          {error ? <p className="mt-2 text-sm text-amber-200" role="alert">{error}</p> : null}
+          <div className="flex items-center gap-5"><Link href="/" className="brand-wordmark" aria-label="ClikWorks account research">CLIK<span>/</span>WORKS</Link><div className="hidden h-5 w-px bg-white/20 sm:block" /><p className="hidden text-sm text-white/62 sm:block">Account brief</p></div>
+          <nav className="flex items-center gap-2" aria-label="Report navigation"><Link href="/" className="inline-flex h-9 items-center gap-2 rounded-[3px] border border-white/20 px-3 text-sm text-white/80 hover:bg-white/8"><ArrowLeft className="size-3.5" />All reports</Link><Link href="/#new-run" className="hidden h-9 items-center gap-2 rounded-[3px] bg-[var(--lime)] px-3 text-sm font-semibold text-[var(--brand)] hover:bg-[#72f49d] sm:inline-flex"><Plus className="size-3.5" />New run</Link></nav>
         </div>
       </header>
 

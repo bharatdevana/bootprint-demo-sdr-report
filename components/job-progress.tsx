@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Check, Circle, LoaderCircle, X } from "lucide-react";
+import { ArrowLeft, Check, Circle, LoaderCircle, X } from "lucide-react";
 import { PROGRESS_STAGES, type ProgressEvent } from "@/lib/research-workflow";
 
 type Job = { status: string; outcome?: "published" | "blocked"; companyName?: string; reportUrl?: string; message?: string; details?: string[]; createdAt?: string; completedAt?: string; error?: string };
@@ -51,7 +51,7 @@ export function JobProgress({ runId }: { runId: string }) {
   const elapsed = Math.max(0, Math.floor((ended - started) / 1000));
 
   return <main className="min-h-screen bg-[var(--paper)] text-[var(--ink)]">
-    <header className="bg-[var(--brand)] text-white"><div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-5 sm:px-8"><Link href="/" className="brand-wordmark">CLIK<span>/</span>WORKS</Link><span className="text-sm text-white/60">Account research job</span></div></header>
+    <header className="bg-[var(--brand)] text-white"><div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-4 sm:px-8"><div className="flex items-center gap-5"><Link href="/" className="brand-wordmark">CLIK<span>/</span>WORKS</Link><span className="hidden text-sm text-white/60 sm:block">Research run</span></div><Link href="/" className="inline-flex h-9 items-center gap-2 rounded-[3px] border border-white/20 px-3 text-sm text-white/80 hover:bg-white/8"><ArrowLeft className="size-3.5" />All reports</Link></div></header>
     <section className="mx-auto max-w-5xl px-5 py-12 sm:px-8 lg:py-16">
       <div className="flex flex-col justify-between gap-6 border-b border-[var(--rule)] pb-8 sm:flex-row sm:items-end">
         <div><p className="eyebrow text-[var(--muted-ink)]">Live research</p><h1 className="mt-3 text-4xl font-medium tracking-[-0.05em] sm:text-5xl">{job.companyName || latest?.label || "Preparing the account brief"}</h1><p className="mt-3 text-[var(--muted-ink)]">{latest?.message || "Connecting to the durable job record…"}</p></div>

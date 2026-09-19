@@ -14,6 +14,7 @@ import {
 } from "@/lib/research-guardrails";
 import { mergeLinkedInProfiles, type PeopleResearch } from "@/lib/openai-account-research";
 import { classifyLogoPixels, inferLogoSurfaceTone } from "@/lib/logo-presentation";
+import { calculateDashboardMetrics } from "@/lib/research-workflow";
 
 test("removes inline citation markup without truncating the claim", () => {
   assert.equal(
@@ -96,6 +97,19 @@ test("selects the logo plate from visible pixel luminance", () => {
   assert.equal(classifyLogoPixels(new Uint8Array([255, 255, 255, 255, 245, 245, 245, 255]), 4), "dark");
   assert.equal(classifyLogoPixels(new Uint8Array([12, 18, 32, 255, 40, 60, 80, 255]), 4), "light");
   assert.equal(classifyLogoPixels(new Uint8Array([255, 255, 255, 0]), 4), null);
+});
+
+test("reports publish rate from completed workflow runs only", () => {
+  const base = { companyName: "Example", inputUrl: "https://example.com", createdAt: "2026-09-19T00:00:00Z" };
+  const metrics = calculateDashboardMetrics([
+    { ...base, id: "1", status: "Published" },
+    { ...base, id: "2", status: "Published" },
+    { ...base, id: "3", status: "Stopped safely" },
+    { ...base, id: "4", status: "In progress" },
+  ]);
+  assert.equal(metrics.publishedRuns, 2);
+  assert.equal(metrics.completedRuns, 3);
+  assert.equal(metrics.publishRate, 67);
 });
 
 test("approved calibration reports remain inside the total copy budget", () => {
