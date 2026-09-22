@@ -10,7 +10,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint . --ignore-pattern .next",
-    "test": "tsx --test research-guardrails.test.ts demo-expiry.test.ts lib/demo-limits.test.mjs"
+    "test": "tsx --test research-guardrails.test.ts demo-expiry.test.ts demo-auth.test.ts lib/demo-limits.test.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

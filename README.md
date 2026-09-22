@@ -4,7 +4,8 @@ A branded internal account brief for SDR and BDR teams. The demo turns researche
 
 ## Demo routes
 
-- `/` — Specialty Box
+- `/` — account research dashboard
+- `/reports/specialty-box` — Specialty Box calibration report
 - `/josh-packaging` — Josh Packaging
 
 ## Local development
@@ -18,7 +19,14 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Production access
 
-The demonstration is publicly accessible. Pages send `noindex` directives to discourage search-engine indexing, but this is not access control.
+The public repository does not contain credentials. Production requires a server-only `DEMO_PASSWORD` of at least 20 characters. A correct password creates a signed, HttpOnly, SameSite=Strict session cookie lasting 12 hours. The proxy protects pages and API routes while leaving Next.js assets and Vercel Workflow internals available. Pages also send `noindex` directives.
+
+Set or rotate the password in Vercel, then redeploy:
+
+```bash
+vercel env add DEMO_PASSWORD production
+vercel deploy --prod
+```
 
 ## Validation
 
